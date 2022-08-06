@@ -2,16 +2,17 @@ import time
 
 import redis
 from flask import Flask
+from flask import request
 
 app = Flask(__name__)
-cache = redis.Redis(host='redis', port=6379)
+lists = redis.Redis(host='redis', port=6379)
 
 
 def get_hit_count():
     retries = 5
     while True:
         try:
-            return cache.incr('hits')
+            return lists.incr('hits')
         except redis.exceptions.ConnectionError as exc:
             if retries == 0:
                 raise exc
@@ -30,6 +31,33 @@ def pong():
     return 'Pong!'
 
 
+@app.route('/json-example', methods=['POST'])
+def json_example():
+    request_data = request.get_json()
+
+    language = request_data['language']
+    framework = request_data['framework']
+
+    # two keys are needed because of the nested object
+    python_version = request_data['version_info']['python']
+
+    # an index is needed because of the array
+    example = request_data['examples'][0]
+
+    boolean_test = request_data['boolean_test']
+
+    return '''
+           The language value is: {}
+           The framework value is: {}
+           The Python version is: {}
+           The item at index 0 in the example list is: {}
+           The boolean value is: {}'''.format(language, framework, python_version, example, boolean_test)
+
+
 @app.post('/api/queue/push')
 def push():
-    return 'Pong!'
+    request_data = request.get_json()
+    name = request_data['name']
+    message = request_data['message']
+    lists.rpush(name, message)
+    return 'OK'
