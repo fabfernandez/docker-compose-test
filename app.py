@@ -24,6 +24,12 @@ def hello():
     count = get_hit_count()
     return 'Hello from FABA! I have been seen {} times.\n'.format(count)
 
+
 @app.get('/ping')
-def hello_world():
+def pong():
+    return 'Pong!'
+
+
+@app.post('/api/queue/push')
+def push():
     return 'Pong!'
