@@ -61,3 +61,9 @@ def push():
     message = request_data['message']
     lists.rpush(name, message)
     return 'OK'
+
+
+@app.get('/api/queue/pop')
+def pop():
+    name = request.args.get('name')
+    return lists.lpop(name)
