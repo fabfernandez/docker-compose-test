@@ -31,39 +31,33 @@ def pong():
     return 'Pong!'
 
 
-@app.route('/json-example', methods=['POST'])
-def json_example():
-    request_data = request.get_json()
-
-    language = request_data['language']
-    framework = request_data['framework']
-
-    # two keys are needed because of the nested object
-    python_version = request_data['version_info']['python']
-
-    # an index is needed because of the array
-    example = request_data['examples'][0]
-
-    boolean_test = request_data['boolean_test']
-
-    return '''
-           The language value is: {}
-           The framework value is: {}
-           The Python version is: {}
-           The item at index 0 in the example list is: {}
-           The boolean value is: {}'''.format(language, framework, python_version, example, boolean_test)
-
-
 @app.post('/api/queue/push')
 def push():
-    request_data = request.get_json()
-    name = request_data['name']
-    message = request_data['message']
-    lists.rpush(name, message)
-    return 'OK'
+    retries = 5
+    while True:
+        try:
+            request_data = request.get_json()
+            name = request_data['name']
+            message = request_data['message']
+            lists.rpush(name, message)
+            return 'Pushed on {}'''.format(name)
+        except redis.exceptions.ConnectionError as exc:
+            if retries == 0:
+                raise exc
+            retries -= 1
+            time.sleep(0.5)
 
 
 @app.get('/api/queue/pop')
 def pop():
-    name = request.args.get('name')
-    return lists.lpop(name)
+    retries = 5
+    while True:
+        try:
+            name = request.args.get('name')
+            return lists.lpop(name)
+        except redis.exceptions.ConnectionError as exc:
+            if retries == 0:
+                raise exc
+            retries -= 1
+            time.sleep(0.5)
+
