@@ -33,33 +33,15 @@ def pong():
 
 @app.post('/api/queue/push')
 def push():
-    retries = 5
-    while True:
-        try:
-            request_data = request.get_json()
-            name = request_data['name']
-            message = request_data['message']
+    request_data = request.get_json()
+    name = request_data['name']
+    message = request_data['message']
 
-            redisClient.rpush(name, message)
-            return 'Pushed on {}'''.format(name)
-
-        except redis.exceptions.ConnectionError as exc:
-            if retries == 0:
-                raise exc
-            retries -= 1
-            time.sleep(0.5)
+    redisClient.rpush(name, message)
+    return 'Pushed on {}'''.format(name)
 
 
 @app.get('/api/queue/pop')
 def pop():
-    retries = 5
-    while True:
-        try:
-            name = request.args.get('name')
-            return redisClient.lpop(name)
-
-        except redis.exceptions.ConnectionError as exc:
-            if retries == 0:
-                raise exc
-            retries -= 1
-            time.sleep(0.5)
+    name = request.args.get('name')
+    return redisClient.lpop(name)
